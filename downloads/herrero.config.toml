@@ -1,0 +1,81 @@
+# Plantilla de configuración del Herrero (Codex con Qwen local vía LM Studio).
+# Es una plantilla: sustituye los valores {{...}} por los tuyos antes de usarla.
+# No es una copia del config privado de Aaron; se redactó desde los valores
+# deseados documentados en la guía (research.md de la feature 001-ceo-herrero-web).
+
+# Carpeta compartida donde trabajan CEO y Herrero (mismo -C en ambos procesos).
+# Ejemplo: /Users/TU_USUARIO/mi-proyecto
+workspace = "{{WORKSPACE_DIR}}"
+
+# Modelo local servido por LM Studio. {{QWEN_MODEL_ID}} es el identificador
+# estable que devuelve tu instalación (en el montaje observado: "6-bit").
+model = "{{QWEN_MODEL_ID}}"
+model_provider = "lmstudio"
+oss_provider = "lmstudio"
+
+# Contexto real cargado por tu modelo (no el máximo teórico) y umbral de
+# compactación por debajo de ese contexto. En el montaje observado: 169728 y
+# 135000. Ajusta ambos a tu modelo manteniendo COMPACT_LIMIT < QWEN_CONTEXT.
+model_context_window = {{QWEN_CONTEXT}}
+model_auto_compact_token_limit = {{COMPACT_LIMIT}}
+
+# Efecto directo de estos dos valores: el Herrero ejecuta comandos sin pedir
+# confirmación y sin sandbox. Revísalo antes de abrir el Herrero en una carpeta nueva.
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+web_search = "disabled"
+
+# Montaje mínimo: se desactivan plugins, apps, MCP adicionales, hooks, memorias,
+# multi-agente y dependencias de workspace. Si la app de escritorio vuelve a
+# registrar marketplaces o plugins, retíralos; no son parte del montaje mínimo.
+[features]
+multi_agent = false
+multi_agent_v2 = false
+agent_message_board = false
+memories = false
+plugins = false
+remote_plugin = false
+apps = false
+hooks = false
+workspace_dependencies = false
+daemon_auto_start = false
+browser_use = false
+browser_use_external = false
+computer_use = false
+image_generation = false
+code_mode_host = false
+
+[memories]
+use_memories = false
+generate_memories = false
+
+# Confía la carpeta compartida (ajusta la ruta a tu {{WORKSPACE_DIR}}).
+[projects."{{WORKSPACE_DIR}}"]
+trust_level = "trusted"
+
+# Skills del sistema que no se usan en esta arquitectura: quedan desactivadas
+# explícitamente. Si Codex vuelve a desplegarlas, conserva estas entradas.
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/imagegen"
+enabled = false
+
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/openai-docs"
+enabled = false
+
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/plugin-creator"
+enabled = false
+
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/review-agent"
+enabled = false
+
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/skill-creator"
+enabled = false
+
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/skill-installer"
+enabled = false

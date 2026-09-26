@@ -1,0 +1,270 @@
+/* CEO & Herrero — estilo compartido. Grafito/marfil, sin fuentes remotas ni
+   bibliotecas UI. CEO en azul hielo, Herrero en ámbar; el texto acompaña
+   siempre al color. */
+
+:root {
+  --bg: #14161a;
+  --bg-raised: #1c2027;
+  --ink: #f4efe6;
+  --ink-soft: #c9c2b4;
+  --line: #3a4150;
+  --ceo: #9ecbff;
+  --herrero: #f2b45c;
+  --ok: #8fd694;
+  --error: #f2a05c;
+  --radius: 10px;
+  --maxw: 72rem;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.65;
+  font-size: 1.0625rem;
+}
+
+.page {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 1.5rem clamp(1rem, 4vw, 2.5rem) 3rem;
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0.5rem;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius);
+  z-index: 10;
+}
+
+.skip-link:focus { left: 0.5rem; }
+
+a { color: var(--ceo); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--ink); }
+
+:focus-visible {
+  outline: 3px solid var(--herrero);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1, h2, h3 { line-height: 1.2; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2rem, 5vw, 3.25rem); margin: 0.5rem 0 1rem; }
+h2 { font-size: clamp(1.4rem, 3vw, 2rem); margin-top: 2.5rem; }
+h3 { font-size: 1.15rem; margin-top: 1.75rem; }
+
+p { max-width: 68ch; }
+ul, ol { max-width: 72ch; padding-left: 1.4rem; }
+li { margin: 0.35rem 0; max-width: 72ch; }
+
+header.site {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: baseline;
+}
+
+.brand { font-weight: 700; font-size: 1.2rem; color: var(--ink); text-decoration: none; }
+.brand .role-ceo { color: var(--ceo); }
+.brand .role-herrero { color: var(--herrero); }
+
+nav.site-nav a { margin-right: 1rem; color: var(--ink-soft); }
+nav.site-nav a[aria-current="page"] { color: var(--ink); font-weight: 600; }
+
+.lead {
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+
+.cta-row { display: flex; flex-wrap: wrap; gap: 0.9rem; margin: 1.5rem 0 2.5rem; }
+
+.btn {
+  display: inline-block;
+  padding: 0.7rem 1.3rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  color: var(--ink);
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn:hover { border-color: var(--ink-soft); }
+.btn-primary { background: var(--ceo); border-color: var(--ceo); color: #10233c; font-weight: 600; }
+.btn-primary:hover { background: #b7d8ff; color: #10233c; }
+.btn-amber { background: var(--herrero); border-color: var(--herrero); color: #3a2405; font-weight: 600; }
+.btn-amber:hover { background: #f7c884; color: #3a2405; }
+
+/* Diagrama de terminales (portada) */
+.diagram {
+  display: grid;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+@media (min-width: 768px) {
+  .diagram { grid-template-columns: 1fr auto 1fr; align-items: stretch; }
+}
+
+.terminal {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); display: inline-block; }
+.terminal-ceo .dot { background: var(--ceo); }
+.terminal-herrero .dot { background: var(--herrero); }
+
+.terminal-body {
+  padding: 1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92rem;
+  overflow-x: auto;
+}
+
+.terminal-body pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+
+.flow {
+  align-self: center;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  padding: 0.5rem;
+}
+
+.flow .arrow { font-size: 1.4rem; display: block; }
+@media (min-width: 768px) { .flow .arrow-h { display: inline; } .flow .arrow-v { display: none; } }
+@media (max-width: 767px) { .flow .arrow-h { display: none; } .flow .arrow-v { display: inline; } }
+
+.artifacts {
+  background: var(--bg-raised);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.2rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92rem;
+}
+
+.diagram-caption { color: var(--ink-soft); font-size: 0.95rem; margin-top: 0.75rem; }
+
+/* Bloques de código y comandos */
+pre, code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92rem;
+}
+
+code { background: var(--bg-raised); padding: 0.1rem 0.35rem; border-radius: 4px; }
+
+pre {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+pre code { background: none; padding: 0; }
+
+.cmd { position: relative; margin: 1rem 0; }
+.cmd pre { padding-right: 6.5rem; }
+
+.copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.copy-status { display: block; margin-top: 0.35rem; font-size: 0.9rem; color: var(--ok); }
+.copy-status-error { color: var(--error); }
+
+/* Tablas */
+table { border-collapse: collapse; width: 100%; max-width: 100%; margin: 1rem 0; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--line); padding: 0.5rem 0.8rem; text-align: left; }
+th { background: var(--bg-raised); }
+
+/* Encargo IA */
+.brief-panel {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+#ai-prompt {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Índice de la guía humana */
+.toc { background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.5rem; }
+.toc ol { margin: 0.5rem 0 0; }
+
+footer.site {
+  border-top: 1px solid var(--line);
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.role-tag { display: inline-block; padding: 0.1rem 0.6rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
+.role-tag-ceo { background: rgba(158, 203, 255, 0.15); color: var(--ceo); }
+.role-tag-herrero { background: rgba(242, 180, 92, 0.15); color: var(--herrero); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; animation: none !important; }
+}
+
+/* Guía humana: numeración de pasos y navegación entre guías */
+.step-num {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0.05rem 0.45rem;
+  margin-right: 0.6rem;
+  border-radius: var(--radius);
+  background: rgba(242, 180, 92, 0.15);
+  color: var(--herrero);
+  font-size: 0.8em;
+  vertical-align: middle;
+}
+
+.guide-nav {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
