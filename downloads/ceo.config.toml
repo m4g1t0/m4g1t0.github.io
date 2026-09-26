@@ -1,0 +1,75 @@
+# Plantilla de configuración del CEO (Codex con GPT).
+# Es una plantilla: sustituye los valores {{...}} por los tuyos antes de usarla.
+# No es una copia del config privado de Aaron; se redactó desde los valores
+# deseados documentados en la guía (research.md de la feature 001-ceo-herrero-web).
+
+# Carpeta compartida donde trabajan CEO y Herrero (mismo -C en ambos procesos).
+# Ejemplo: /Users/TU_USUARIO/mi-proyecto
+workspace = "{{WORKSPACE_DIR}}"
+
+# Modelo y proveedor del CEO. Usa la cuenta de ChatGPT/OpenAI de tu propio usuario.
+model = "{{GPT_MODEL}}"
+model_provider = "openai"
+model_reasoning_effort = "xhigh"
+
+# Efecto directo de estos dos valores: el CEO ejecuta comandos sin pedir
+# confirmación y sin sandbox. Revísalo antes de abrir el CEO en una carpeta nueva.
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+web_search = "disabled"
+
+# Montaje mínimo: se desactivan plugins, apps, MCP adicionales, hooks, memorias,
+# multi-agente y dependencias de workspace. Si la app de escritorio vuelve a
+# registrar marketplaces o plugins (por ejemplo openai-primary-runtime), retíralos
+# de este archivo; no son parte del montaje mínimo.
+[features]
+multi_agent = false
+multi_agent_v2 = false
+agent_message_board = false
+memories = false
+plugins = false
+remote_plugin = false
+apps = false
+hooks = false
+workspace_dependencies = false
+daemon_auto_start = false
+browser_use = false
+browser_use_external = false
+computer_use = false
+image_generation = false
+code_mode_host = false
+
+[memories]
+use_memories = false
+generate_memories = false
+
+# Confía la carpeta compartida (ajusta la ruta a tu {{WORKSPACE_DIR}}).
+[projects."{{WORKSPACE_DIR}}"]
+trust_level = "trusted"
+
+# Skills del sistema que no se usan en esta arquitectura: quedan desactivadas
+# explícitamente. Si Codex vuelve a desplegarlas, conserva estas entradas.
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/imagegen"
+enabled = false
+
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/openai-docs"
+enabled = false
+
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/plugin-creator"
+enabled = false
+
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/review-agent"
+enabled = false
+
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/skill-creator"
+enabled = false
+
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/skill-installer"
+enabled = false
