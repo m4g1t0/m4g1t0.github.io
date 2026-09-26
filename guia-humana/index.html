@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guía humana — CEO &amp; Herrero</title>
+  <meta name="description" content="Monta dos Codex independientes en tu Mac: CEO con GPT planifica con Spec Kit y Herrero con Qwen local implementa. Pasos, comandos copiables, uso diario y diagnóstico.">
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <div class="page">
+    <header class="site">
+      <a class="brand" href="/">CEO <span class="role-ceo">&amp;</span> Herrero</a>
+      <nav class="site-nav" aria-label="Secciones">
+        <a href="/guia-humana/" aria-current="page">Guía humana</a>
+        <a href="/guia-ia/">Encargo para IA</a>
+        <a href="https://github.com/m4g1t0" rel="me">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="contenido">
+      <h1>Monta CEO y Herrero en tu Mac</h1>
+      <p class="lead">Guía paso a paso para humanos: instalación mínima, Qwen local en LM Studio, dos Codex con homes separados y Spec Kit compartido. Referencia fechada: <strong>2026-09-26</strong>, montaje observado en un M4 Max con 64&nbsp;GiB (Codex CLI 0.156.1, LM Studio 0.4.25+1, Spec Kit 1.0.11). Es una referencia, no un requisito universal.</p>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/downloads/guia-humana.md">Descargar esta guía (Markdown)</a>
+        <a class="btn btn-amber" href="/guia-ia/">Pasárselo a mi IA</a>
+      </div>
+
+      <nav class="toc" aria-label="Índice de la guía">
+        <h2 style="margin-top:0">Índice</h2>
+        <ol>
+          <li><a href="#que-vas-a-montar">Qué vas a montar</a></li>
+          <li><a href="#antes-de-empezar">Antes de empezar</a></li>
+          <li><a href="#instalar-solo-lo-necesario">Instalar solo lo necesario</a></li>
+          <li><a href="#elegir-carpeta-e-identificar-qwen">Elegir carpeta e identificar Qwen</a></li>
+          <li><a href="#servir-qwen">Servir Qwen</a></li>
+          <li><a href="#configurar-los-dos-codex">Configurar los dos Codex</a></li>
+          <li><a href="#preparar-spec-kit">Preparar Spec Kit una sola vez en la carpeta real</a></li>
+          <li><a href="#abrir-ceo-y-herrero">Abrir CEO y Herrero</a></li>
+          <li><a href="#uso-diario">Uso diario</a></li>
+          <li><a href="#comprobar-y-resolver-fallos">Comprobar y resolver fallos</a></li>
+          <li><a href="#limpiar-un-montaje-anterior">Limpiar un montaje anterior</a></li>
+          <li><a href="#fuentes-y-referencia-fechada">Fuentes y referencia fechada</a></li>
+        </ol>
+      </nav>
+
+      <section id="que-vas-a-montar" aria-labelledby="t1">
+        <h2 id="t1"><span class="step-num" aria-hidden="true">1</span> Qué vas a montar</h2>
+        <ul>
+          <li><span class="role-tag role-tag-ceo">CEO</span> Un Codex CLI con GPT (proveedor <code>openai</code>, tu cuenta de ChatGPT). Solo planifica: <code>$speckit-specify → $speckit-clarify → $speckit-plan → $speckit-tasks</code>.</li>
+          <li><span class="role-tag role-tag-herrero">Herrero</span> Otro Codex CLI con Qwen local (proveedor <code>lmstudio</code>). Solo implementa: <code>$speckit-implement</code>.</li>
+          <li><strong>Mismo checkout, dos homes:</strong> ambos procesos usan la misma carpeta de trabajo (<code>-C</code>), pero cada uno tiene su propio <code>CODEX_HOME</code> con config, AGENTS y autenticación separados.</li>
+          <li><strong>Spec Kit</strong> compartido en la carpeta del proyecto: cinco skills y los artefactos de cada feature (<code>specs/&lt;feature&gt;/</code>), con la feature activa en <code>.specify/feature.json</code>.</li>
+          <li><strong>LM Studio</strong> como servidor de inferencia del Qwen (loopback, puerto 1234). No es otro agente: solo sirve el modelo.</li>
+        </ul>
+        <p>El usuario cambia de sesión manualmente al terminar cada fase; CEO y Herrero no se invocan entre sí.</p>
+      </section>
+
+      <section id="antes-de-empezar" aria-labelledby="t2">
+        <h2 id="t2"><span class="step-num" aria-hidden="true">2</span> Antes de empezar</h2>
+        <ul>
+          <li>Mac Apple Silicon con Terminal y conocimientos básicos de comandos.</li>
+          <li>Espacio en disco y memoria suficientes para el Qwen que elijas. En la referencia observada: un modelo de ~22,8&nbsp;GB en un M4 Max con 64&nbsp;GiB. No es una recomendación universal: verifica los requisitos del modelo concreto que vayas a cargar.</li>
+          <li>Una cuenta propia de ChatGPT/OpenAI para el CEO (autenticación interactiva; no se copian tokens).</li>
+          <li>Un Qwen local con origen verificable: ya descargado en LM Studio o con una procedencia que puedas comprobar. No inventes una URL de descarga del modelo observado; la etiqueta local no identifica por sí sola los pesos.</li>
+          <li>No necesitas Hermes, un segundo agente, paquetes MLX independientes ni wrappers: el montaje mínimo es Codex CLI + LM Studio + Spec Kit.</li>
+        </ul>
+      </section>
+
+      <section id="instalar-solo-lo-necesario" aria-labelledby="t3">
+        <h2 id="t3"><span class="step-num" aria-hidden="true">3</span> Instalar solo lo necesario</h2>
+        <p>Reutiliza lo que ya tengas instalado; no reinstales herramientas generales.</p>
+        <h3>Codex CLI (versión observada: 0.156.1)</h3>
+        <div class="cmd">
+          <button type="button" class="btn copy-btn" data-copy-target="c-codex-ver">Copiar</button>
+          <pre id="c-codex-ver"><code>codex --version</code></pre>
+        </div>
+        <p>Resultado esperado: imprime la versión instalada. Si no existe, instálalo por su vía oficial (por ejemplo <code>brew install codex</code> si usas Homebrew).</p>
+        <h3>LM Studio (versión observada: 0.4.25+1)</h3>
+        <p>App de escritorio que aporta el servidor local y los comandos <code>lms</code>.</p>
+        <div class="cmd">
+          <button type="button" class="btn copy-btn" data-copy-target="c-lms-ver">Copiar</button>
+          <pre id="c-lms-ver"><code>lms --version</code></pre>
+        </div>
+        <h3>Spec Kit con uv y Python 3.11 o superior (pin observado: 1.0.11)</h3>
+        <div class="cmd">
+          <button type="button" class="btn copy-btn" data-copy-target="c-specify">Copiar</button>
+          <pre id="c-specify"><code>uv tool install specify-cli==1.0.11
+specify --version</code></pre>
+        </div>
+        <p>Resultado esperado: <code>specify-cli 1.0.11</code>. No ejecutes <code>specify workflow</code> ni instales extensiones de Git: la arquitectura solo usa las cinco skills.</p>
+      </section>
+
+      <section id="elegir-carpeta-e-identificar-qwen" aria-labelledby="t4">
+        <h2 id="t4"><span class="step-num" aria-hidden="true">4</span> Elegir carpeta e identificar Qwen</h2>
+        <p>1. Elige la carpeta compartida donde trabajarán ambos Codex (en adelante <code>WORKSPACE_DIR</code>), por ejemplo <code>$HOME/mi-proyecto</code>. Debe ser exactamente la misma para los dos procesos.</p>
+        <div class="cmd">
+          <button type="button" class="btn copy-btn" data-copy-target="c-mkdir">Copiar</button>
+          <pre id="c-mkdir"><code>mkdir -p "$HOME/mi-proyecto"
+cd "$HOME/mi-proyecto"</code></pre>
+        </div>
+        <p>2. Identifica el Qwen disponible en tu LM Studio con su clave persistente:</p>
+        <div class="cmd">
+          <button type="button" class="btn copy-btn" data-copy-target="c-lmsls">Copiar</button>
+          <pre id="c-lmsls"><code>lms ls</code></pre>
+        </div>
+        <p>Resultado esperado: una lista de modelos con su identificador. Anota el que vayas a usar (en la referencia observada: <code>6-bit</code>). Si el modelo no está en disco y quieres exactamente los pesos del montaje observado, aporta su procedencia verificable; no lo sustituyas silenciosamente.</p>
+        <p>3. Define tus parámetros (son variables de esta guía, no un formulario):</p>
+        <table>
+          <thead><tr><th>Parámetro</th><th>Referencia observada</th><th>Qué debes hacer</th></tr></thead>
+          <tbody>
+            <tr><td><code>WORKSPACE_DIR</code></td><td><code>$HOME/mi-proyecto</code></td><td>Tu carpeta elegida; la misma para ambos procesos</td></tr>
+            <tr><td><code>CEO_HOME</code></td><td><code>$HOME/.codex</code></td><td>Distinto de HERRERO_HOME; conserva tu autenticación existente</td></tr>
+            <tr><td><code>HERRERO_HOME</code></td><td><code>$HOME/.codex-qwen</code></td><td>Sin copiar la autenticación GPT</td></tr>
+            <tr><td><code>GPT_MODEL</code></td><td><code>gpt-6-sol</code></td><td>Un modelo disponible para tu cuenta; no cambiarlo a escondidas</td></tr>
+            <tr><td><code>QWEN_MODEL_KEY</code></td><td>la clave que devuelve <code>lms ls</code></td><td>Debe existir en disco o tener origen verificable antes de descargarla</td></tr>
+            <tr><td><code>QWEN_MODEL_ID</code></td><td><code>6-bit</code></td><td>El ID disponible después de cargar el modelo; se usa en <code>--model "$QWEN_MODEL_ID"</code></td></tr>
+            <tr><td><code>QWEN_CONTEXT</code></td><td><code>169728</code></td><td>No mayor que el contexto real cargado por tu modelo</td></tr>
+            <tr><td><code>COMPACT_LIMIT</code></td><td><code>135000</code></td><td>Positivo y menor que QWEN_CONTEXT</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="servir-qwen" aria-labelledby="t5">
+        <h2 id="t5"><span class="step-num" aria-hidden="true">5</span> Servir Qwen</h2>
+        <p>1. Abre LM Studio y arranca el servidor en loopback (puerto 1234, sin CORS):</p>
+        <div class="cmd">
+          <button type="button" class="btn copy-btn" data-copy-target="c-server">Copiar</button>
+          <pre id="c-server"><code>lms server start</code></pre>
+        </div>
+        <p>Resultado esperado: servidor escuchando en <code>127.0.0.1:1234</code>.</p>
+        <p>2. Carga el modelo con su comando nativo (descargar y cargar son cosas distintas; <code>lms load</code> solo carga lo que ya está en disco), fijando contexto y concurrencia con las opciones que su ayuda muestra:</p>
+        <div class="cmd">
+          <button type="button" class="btn copy-btn" data-copy-target="c-load">Copiar</button>
+          <pre id="c-load"><code>lms load QWEN_MODEL_KEY --context-length QWEN_CONTEXT --parallel 1</code></pre>
+        </div>
+        <p>Sustituye <code>QWEN_MODEL_KEY</code> por la clave de tu modelo. Resultado esperado: el modelo queda cargado y su identificador estable (por ejemplo <code>6-bit</code>) disponible para el proveedor.</p>
+        <p>3. Persiste los defaults por modelo (contexto efectivo y concurrencia 1) para que las recargas conserven la configuración: en la instalación de referencia, <code>lms</code> no incluye un subcomando para defaults persistentes; configúralos desde la app de LM Studio (defaults por modelo) y verifica con <code>lms --help</code> las opciones que tu versión soporta. La concurrencia de referencia es 1.</p>
+      </section>
+
+      <section id="configurar-los-dos-codex" aria-labelledby="t6">
+        <h2 id="t6"><span class="step-num" aria-hidden="true">6</span> Configurar los dos Codex</h2>
+        <p>1. Crea los dos homes si no existen:</p>
+        <div class="cmd">
+          <button type="button" class="btn copy-btn" data-copy-target="c-homes">Copiar</button>
+          <pre id="c-homes"><code>mkdir -p "$HOME/.codex" "$HOME/.codex-qwen"</code></pre>
+        </div>
+        <p>2. Descarga las plantillas y sustituye los <code>{{PARAMETRO}}</code> por tus valores:</p>
+        <ul>
+          <li><a href="/downloads/ceo.config.toml">Plantilla config CEO</a> → <code>$HOME/.codex/config.toml</code></li>
+          <li><a href="/downloads/herrero.config.toml">Plantilla config Herrero</a> → <code>$HOME/.codex-qwen/config.toml</code></li>
+          <li><a href="/downloads/ceo-AGENTS.md">Reglas del CEO</a> → <code>$HOME/.codex/AGENTS.md</code></li>
+          <li><a href="/downloads/herrero-AGENTS.md">Reglas del Herrero</a> → <code>$HOME/.codex-qwen/AGENTS.md</code></li>
+          <li><a href="/downloads/project-AGENTS.md">Reglas del proyecto</a> → <code>WORKSPACE_DIR/AGENTS.md</code></li>
+          <li><a href="/downloads/constitution.md">Constitución</a> → <code>WORKSPACE_DIR/.specify/memory/constitution.md</code> (tras el init de Spec Kit)</li>
+        </ul>
+        <p>Las plantillas son portables: no contienen rutas, tokens ni datos del Mac de Aaron.</p>
+        <p>3. Autenticación: el CEO usa tu cuenta propia (la autenticación interactiva de Codex con OpenAI). No copies tokens ni archivos <code>auth.json</code> al home del Herrero: el proveedor local no los necesita.</p>
+        <p>4. Efecto de los permisos: en ambas plantillas, <code>approval_policy = "never"</code> y <code>sandbox_mode = "danger-full-access"</code> permiten que el Codex ejecute comandos sin pedir confirmación y sin sandbox. Es una decisión explícita del montaje; si prefieres más fricción, cambia esos valores antes de abrir cada sesión.</p>
+      </section>
+
+      <section id="preparar-spec-kit" aria-labelledby="t7">
+        <h2 id="t7"><span class="step-num" aria-hidden="true">7</span> Preparar Spec Kit una sola vez en la carpeta real</h2>
+        <p>1. En <code>WORKSPACE_DIR</code>, inicializa Spec Kit con la integración Codex:</p>
+        <div class="cmd">
+          <button type="button" class="btn copy-btn" data-copy-target="c-init">Copiar</button>
+          <pre id="c-init"><code>specify init --here --integration codex --script sh</code></pre>
+        </div>
+        <p>Si la carpeta ya tiene contenido de Spec Kit, revisa qué hay antes de usar <code>--force</code>; no pases por encima un estado que quieras conservar.</p>
+        <p>2. La instalación crea skills y scripts en <code>.specify/</code> y <code>.agents/skills/</code>. Conserva solo las cinco skills de esta arquitectura: <code>speckit-specify</code>, <code>speckit-clarify</code>, <code>speckit-plan</code>, <code>speckit-tasks</code> y <code>speckit-implement</code>. Sustitúyelas por las copias adaptadas de esta web si quieres el mismo contenido:</p>
+        <ul>
+          <li><a href="/downloads/speckit/speckit-specify/SKILL.md">speckit-specify</a></li>
+          <li><a href="/downloads/speckit/speckit-clarify/SKILL.md">speckit-clarify</a></li>
+          <li><a href="/downloads/speckit/speckit-plan/SKILL.md">speckit-plan</a></li>
+          <li><a href="/downloads/speckit/speckit-tasks/SKILL.md">speckit-tasks</a></li>
+          <li><a href="/downloads/speckit/speckit-implement/SKILL.md">speckit-implement</a></li>
+        </ul>
+        <p>3. Retira el workflow que la instalación añade (por ejemplo una skill <code>speckit-workflow</code> o entradas equivalentes en el manifiesto de Codex): esta arquitectura no usa workflows automáticos. Al retirar archivos, elimina solo sus entradas del manifiesto y conserva los hashes originales de los archivos que permanecen, para que la detección de customizaciones siga funcionando.</p>
+        <p>4. Conserva los scripts (<code>.specify/scripts/</code>), las plantillas, el estado de integración y la constitución. No crees un proyecto de prueba para verificar nada: la carpeta real es el destino.</p>
+      </section>
+
+      <section id="abrir-ceo-y-herrero" aria-labelledby="t8">
+        <h2 id="t8"><span class="step-num" aria-hidden="true">8</span> Abrir CEO y Herrero</h2>
+        <p>Dos terminales, dos <code>CODEX_HOME</code> distintos, el mismo <code>-C</code>. Herrero indica su modelo con <code>--model "$QWEN_MODEL_ID"</code> de forma explícita: no dependas de que <code>--oss</code> adopte el valor del config.</p>
+        <h3>CEO (en una terminal)</h3>
+        <div class="cmd">
+          <button type="button" class="btn copy-btn" data-copy-target="c-ceo">Copiar</button>
+          <pre id="c-ceo"><code>CODEX_HOME="$HOME/.codex" codex --no-daemon -C "$HOME/mi-proyecto"</code></pre>
+        </div>
+        <h3>Herrero (en otra terminal)</h3>
+        <div class="cmd">
+          <button type="button" class="btn copy-btn" data-copy-target="c-herrero">Copiar</button>
+          <pre id="c-herrero"><code>CODEX_HOME="$HOME/.codex-qwen" codex --no-daemon --oss --local-provider lmstudio --model "$QWEN_MODEL_ID" -C "$HOME/mi-proyecto"</code></pre>
+        </div>
+        <p>Resultado esperado: dos sesiones interactivas de Codex en la misma carpeta. El CEO pide tu autenticación OpenAI si no existe; el Herrero conecta con el servidor LM Studio ya cargado. Si el arranque de Herrero intenta descargar un modelo distinto al tuyo, es que falta o no se ha aplicado <code>--model "$QWEN_MODEL_ID"</code>.</p>
+      </section>
+
+      <section id="uso-diario" aria-labelledby="t9">
+        <h2 id="t9"><span class="step-num" aria-hidden="true">9</span> Uso diario</h2>
+        <ol>
+          <li>Abre CEO y ejecuta, en orden: <code>$speckit-specify</code> (con la descripción de la feature), <code>$speckit-clarify</code>, <code>$speckit-plan</code> y <code>$speckit-tasks</code>. Cada orden genera o actualiza sus artefactos en <code>specs/&lt;feature&gt;/</code> y la feature activa queda registrada en <code>.specify/feature.json</code>.</li>
+          <li>Cuando <code>tasks</code> termina, cierra la sesión de CEO (o déjala en segundo plano) y abre Herrero.</li>
+          <li>En Herrero ejecuta <code>$speckit-implement</code>. Lee los artefactos, ejecuta las tareas una a una en orden de dependencias, verifica cada una y la marca <code>[X]</code> en <code>tasks.md</code>.</li>
+          <li>Si una tarea queda bloqueada, Herrero lo comunica; no improvisa ni regenera los artefactos de CEO.</li>
+          <li>Al terminar, vuelves a CEO para la siguiente feature. El cambio de sesión siempre lo haces tú.</li>
+        </ol>
+      </section>
+
+      <section id="comprobar-y-resolver-fallos" aria-labelledby="t10">
+        <h2 id="t10"><span class="step-num" aria-hidden="true">10</span> Comprobar y resolver fallos</h2>
+        <ul>
+          <li><strong>Versión</strong>: <code>codex --version</code>, <code>lms --version</code>, <code>specify --version</code>.</li>
+          <li><strong>Proveedor y flags</strong>: revisa el config efectivo de cada home (modelo, proveedor, <code>approval_policy</code>, <code>sandbox_mode</code> y las flags <code>[features]</code>).</li>
+          <li><strong>Identificación del modelo</strong>: <code>lms ls</code> para ver claves; tras cargar, el ID estable que devuelve la instalación.</li>
+          <li><strong>Servidor apagado</strong>: <code>lms server start</code> y vuelve a cargar el modelo.</li>
+          <li><strong>Modelo no encontrado</strong>: la clave de <code>lms load</code> debe coincidir con una entrada de <code>lms ls</code>; si no está en disco, descárgalo primero desde su origen verificable.</li>
+          <li><strong>Arranque que intenta descargar otro modelo</strong>: el comando de Herrero debe incluir <code>--model "$QWEN_MODEL_ID"</code> con la variable definida; no dependas de <code>--oss</code> para elegir el modelo.</li>
+          <li><strong>Contexto distinto</strong>: el contexto efectivo es el que carga tu modelo; ajusta <code>model_context_window</code> y <code>model_auto_compact_token_limit</code> en consecuencia (compactación por debajo del contexto real).</li>
+          <li><strong>Skill ausente</strong>: comprueba que la carpeta existe en <code>.agents/skills/</code> y que su entrada sigue en el manifiesto de Codex. Usa la ruta exacta del proyecto; no busques skills en los homes ni en caches de la app.</li>
+          <li><strong>Sesión que se corta o repite</strong>: registra el mensaje, la tarea y el estado de los archivos; reanuda con una conversación limpia conservando el trabajo existente. No aumentes contexto ni instales componentes por conjetura.</li>
+        </ul>
+        <p>No lances prompts canarios ni <code>codex exec</code> para verificar: la comprobación es de configuración y disponibilidad, no una prueba de calidad del modelo.</p>
+      </section>
+
+      <section id="limpiar-un-montaje-anterior" aria-labelledby="t11">
+        <h2 id="t11"><span class="step-num" aria-hidden="true">11</span> Limpiar un montaje anterior</h2>
+        <ol>
+          <li>Identifica los componentes del montaje que reemplazas: procesos Codex en ejecución, configs y AGENTS de los homes implicados, skills instaladas y entradas del manifiesto.</li>
+          <li>Respalda la configuración antes de tocar nada (copia los <code>config.toml</code> y <code>AGENTS.md</code> afectados).</li>
+          <li>Retira solo los componentes identificados: skills extra y sus entradas de manifiesto, registros que la app de escritorio haya añadido (marketplaces/plugins como <code>openai-primary-runtime</code>) y flags ajenas.</li>
+          <li>No borres herramientas generales, proyectos ni historiales de sesión. Las caches de la app de escritorio pueden reaparecer: evalúa las flags efectivas y usa las dos CLI para la arquitectura mínima.</li>
+        </ol>
+      </section>
+
+      <section id="fuentes-y-referencia-fechada" aria-labelledby="t12">
+        <h2 id="t12"><span class="step-num" aria-hidden="true">12</span> Fuentes y referencia fechada</h2>
+        <ul>
+          <li><a href="https://developers.openai.com/codex/cli">Codex CLI</a> y <a href="https://developers.openai.com/codex/config-reference">referencia de configuración</a>.</li>
+          <li><a href="https://lmstudio.ai/docs/app/advanced/per-model">LM Studio: defaults por modelo</a> y <a href="https://lmstudio.ai/docs/cli/load">comando nativo de carga</a>.</li>
+          <li><a href="https://github.com/github/spec-kit/blob/main/docs/installation.md">Spec Kit: instalación oficial</a> e <a href="https://github.com/github/spec-kit/blob/main/docs/reference/integrations.md">integración Codex</a>.</li>
+        </ul>
+        <p><strong>Montaje observado el 2026-09-26:</strong> Codex CLI <code>0.156.1</code>, LM Studio <code>0.4.25+1</code>, Spec Kit <code>specify-cli 1.0.11</code>; M4 Max con 64&nbsp;GiB; Qwen local <code>Qwen3.8-27B-Uncensored-6bit/6-bit</code> (ID estable <code>6-bit</code>, ~22,8&nbsp;GB); contexto <code>169728</code>, compactación <code>135000</code>, concurrencia <code>1</code>; servidor en loopback puerto <code>1234</code> sin CORS.</p>
+      </section>
+
+      <nav class="guide-nav" aria-label="Otras páginas">
+        <a href="/">← Volver a la portada</a>
+        <a href="/guia-ia/">Siguiente: encargo para una IA →</a>
+      </nav>
+    </main>
+
+    <footer class="site">
+      <p><a href="https://github.com/m4g1t0">Perfil de m4g1t0</a> · <a href="https://github.com/m4g1t0/m4g1t0.github.io">Repositorio de esta web</a> · Montaje documentado el 2026-09-26.</p>
+    </footer>
+  </div>
+  <script src="/assets/copy.js"></script>
+</body>
+</html>

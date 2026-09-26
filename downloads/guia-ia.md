@@ -1,0 +1,359 @@
+# Encargo para una IA: montar CEO y Herrero en este Mac
+
+Configura este Mac con dos Codex independientes que comparten una sola carpeta de trabajo: un CEO (Codex con GPT) que planifica y un Herrero (Codex con Qwen local servido por LM Studio) que implementa, coordinados por Spec Kit. Este documento es autocontenido: contiene objetivo, parámetros, configuración completa, procedimiento, verificación y entrega. No asumas «como en el chat anterior» ni leas configuraciones privadas: si falta un dato imprescindible, pídelo antes de continuar.
+
+Referencia fechada: 2026-09-26 (Codex CLI 0.156.1, LM Studio 0.4.25+1, Spec Kit specify-cli 1.0.11). Es una referencia observada en un M4 Max con 64 GiB, no un requisito universal.
+
+## 1. Objetivo y arquitectura exacta
+
+- **CEO**: Codex CLI con GPT (proveedor `openai`, cuenta propia del usuario). Solo planifica: `$speckit-specify → $speckit-clarify → $speckit-plan → $speckit-tasks`.
+- **Herrero**: Codex CLI con Qwen local (proveedor `lmstudio`). Solo implementa: `$speckit-implement`.
+- **Mismo checkout, dos homes**: ambos procesos usan la misma carpeta de trabajo (`-C`), pero cada uno tiene su propio `CODEX_HOME` con config, AGENTS y autenticación separados.
+- **Spec Kit** compartido en la carpeta del proyecto: cinco skills y los artefactos de cada feature (`specs/<feature>/`), con la feature activa en `.specify/feature.json`.
+- **LM Studio** como servidor de inferencia del Qwen (loopback, puerto 1234). No es otro agente: solo sirve el modelo.
+- El usuario cambia de sesión manualmente al terminar cada fase; CEO y Herrero no se invocan entre sí.
+
+## 2. Parámetros y cómo resolverlos
+
+Usa los valores ya definidos en este Mac si existen; pregunta solo por los datos imprescindibles que falten. No cambies el modelo a escondidas: si propones otro, dilo explícitamente y espera confirmación.
+
+| Parámetro | Referencia observada | Qué hacer |
+|---|---|---|
+| `WORKSPACE_DIR` | `$HOME/mi-proyecto` | Carpeta compartida; la misma para ambos procesos. Si ya existe un proyecto elegido, úsalo |
+| `CEO_HOME` | `$HOME/.codex` | Distinto de HERRERO_HOME; conserva la autenticación existente |
+| `HERRERO_HOME` | `$HOME/.codex-qwen` | Sin copiar la autenticación GPT |
+| `GPT_MODEL` | un modelo disponible para tu cuenta | No cambiarlo a escondidas |
+| `QWEN_MODEL_KEY` | la clave que devuelve `lms ls` | Debe existir en disco o tener origen verificable antes de descargarla |
+| `QWEN_MODEL_ID` | el ID estable que devuelve tu instalación tras cargar (referencia: `6-bit`) | Se usa en el config y en `--model` |
+| `QWEN_CONTEXT` | no mayor que el contexto real cargado por tu modelo (referencia: `169728`) | Léelo de la carga real, no del máximo teórico |
+| `COMPACT_LIMIT` | positivo y menor que QWEN_CONTEXT (referencia: `135000`) | Umbral de compactación por debajo del contexto real |
+
+## 3. Componentes y límites
+
+- **Codex CLI** (vía oficial, por ejemplo Homebrew), **LM Studio** (app de escritorio con `lms`) y **Spec Kit** (`uv tool install specify-cli==1.0.11`, requiere `uv` y Python 3.11+).
+- Sin delegación, subagentes, workers, `codex exec`, Hermes, OpenCode, ECC, wrappers ni orquestadores. Cada Codex trabaja en su propia sesión.
+- Sin workflows automáticos: la instalación de Spec Kit añade uno; se retira (ver paso 5.6).
+- Sin paquetes MLX independientes, segundo agente ni instaladores wrapper.
+
+## 4. Inspección antes de mutar
+
+Antes de escribir nada, verifica y registra:
+
+1. Herramientas presentes y versiones: `codex --version`, `lms --version`, `specify --version` (si existe).
+2. Modelos locales: `lms ls`; identifica la clave del Qwen y su procedencia (en disco o verificable).
+3. Procesos en ejecución: sesiones Codex abiertas y servidor LM Studio (`lms server status` o equivalente).
+4. Pertenencia de componentes antiguos: qué configs, AGENTS, skills y entradas de manifiesto pertenecen a un montaje previo y cuáles son del usuario.
+5. Preserva siempre: credenciales (`auth.json`), historiales de sesión, proyectos y herramientas generales. No borres nada ajeno sin autorización explícita.
+
+## 5. Instalación y configuración en orden
+
+1. **Instalación mínima**: reutiliza lo instalado; instala solo lo que falte (Codex CLI, LM Studio, `uv` + Spec Kit 1.0.11). No reinstales herramientas generales.
+2. **Carpeta compartida**: crea o confirma `WORKSPACE_DIR` (por ejemplo `mkdir -p "$HOME/mi-proyecto"`).
+3. **Proveedor local**: arranca el servidor en loopback (`lms server start`, puerto 1234) y carga el modelo con contexto y concurrencia:
+
+   ```bash
+   lms load QWEN_MODEL_KEY --context-length QWEN_CONTEXT --parallel 1
+   ``` Los defaults persistentes por modelo se configuran desde la app de LM Studio; `lms` no incluye un subcomando para ellos en la versión de referencia.
+4. **Dos configs**: crea `CEO_HOME` y `HERRERO_HOME` si no existen, descarga las plantillas (o usa los bloques de la sección 6) y sustituye cada `{PARAMETRO}`:
+   - [Plantilla config CEO](/downloads/ceo.config.toml) → `CEO_HOME/config.toml`
+   - [Plantilla config Herrero](/downloads/herrero.config.toml) → `HERRERO_HOME/config.toml`
+5. **Documentos de reglas**: coloca los cuatro Markdown (bloques en la sección 6):
+   - [Reglas del CEO](/downloads/ceo-AGENTS.md) → `CEO_HOME/AGENTS.md`
+   - [Reglas del Herrero](/downloads/herrero-AGENTS.md) → `HERRERO_HOME/AGENTS.md`
+   - [Reglas del proyecto](/downloads/project-AGENTS.md) → `WORKSPACE_DIR/AGENTS.md`
+   - [Constitución](/downloads/constitution.md) → `WORKSPACE_DIR/.specify/memory/constitution.md` (tras el init de Spec Kit)
+6. **Spec Kit una sola vez**: en `WORKSPACE_DIR`, ejecuta `specify init --here --integration codex --script sh`. Conserva solo las cinco skills (`speckit-specify`, `speckit-clarify`, `speckit-plan`, `speckit-tasks`, `speckit-implement`); sustitúyelas por las copias de [downloads/speckit/](/downloads/) si quieres el mismo contenido. Retira el workflow que la instalación añade (skill `speckit-workflow` o entradas equivalentes del manifiesto de Codex) y conserva los hashes originales de los archivos que permanecen. Conserva scripts, plantillas, estado de integración y constitución. No crees un proyecto de prueba: la carpeta real es el destino.
+7. **Autenticación**: el CEO usa la autenticación interactiva de Codex con OpenAI (cuenta propia). No copies tokens ni `auth.json` al home del Herrero: el proveedor local no los necesita.
+8. **Permisos**: en ambas plantillas, `approval_policy = "never"` y `sandbox_mode = "danger-full-access"` permiten ejecutar comandos sin confirmación ni sandbox. Es una decisión explícita; si el usuario prefiere más fricción, ajusta esos valores antes de abrir cada sesión.
+
+## 6. Configuración deseada completa
+
+Los bloques siguientes son el contenido exacto de los archivos descargables; copiar este documento incluye estos bloques, no solo un resumen. Sustituye cada `{PARAMETRO}` por el valor resuelto en la sección 2.
+
+### 6.1 Config del CEO (`CEO_HOME/config.toml`)
+
+```toml
+# Plantilla de configuración del CEO (Codex con GPT).
+# Es una plantilla: sustituye los valores {{...}} por los tuyos antes de usarla.
+# No es una copia del config privado de Aaron; se redactó desde los valores
+# deseados documentados en la guía (research.md de la feature 001-ceo-herrero-web).
+
+# Carpeta compartida donde trabajan CEO y Herrero (mismo -C en ambos procesos).
+# Ejemplo: /Users/TU_USUARIO/mi-proyecto
+workspace = "{{WORKSPACE_DIR}}"
+
+# Modelo y proveedor del CEO. Usa la cuenta de ChatGPT/OpenAI de tu propio usuario.
+model = "{{GPT_MODEL}}"
+model_provider = "openai"
+model_reasoning_effort = "xhigh"
+
+# Efecto directo de estos dos valores: el CEO ejecuta comandos sin pedir
+# confirmación y sin sandbox. Revísalo antes de abrir el CEO en una carpeta nueva.
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+web_search = "disabled"
+
+# Montaje mínimo: se desactivan plugins, apps, MCP adicionales, hooks, memorias,
+# multi-agente y dependencias de workspace. Si la app de escritorio vuelve a
+# registrar marketplaces o plugins (por ejemplo openai-primary-runtime), retíralos
+# de este archivo; no son parte del montaje mínimo.
+[features]
+multi_agent = false
+multi_agent_v2 = false
+agent_message_board = false
+memories = false
+plugins = false
+remote_plugin = false
+apps = false
+hooks = false
+workspace_dependencies = false
+daemon_auto_start = false
+browser_use = false
+browser_use_external = false
+computer_use = false
+image_generation = false
+code_mode_host = false
+
+[memories]
+use_memories = false
+generate_memories = false
+
+# Confía la carpeta compartida (ajusta la ruta a tu {{WORKSPACE_DIR}}).
+[projects."{{WORKSPACE_DIR}}"]
+trust_level = "trusted"
+
+# Skills del sistema que no se usan en esta arquitectura: quedan desactivadas
+# explícitamente. Si Codex vuelve a desplegarlas, conserva estas entradas.
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/imagegen"
+enabled = false
+
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/openai-docs"
+enabled = false
+
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/plugin-creator"
+enabled = false
+
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/review-agent"
+enabled = false
+
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/skill-creator"
+enabled = false
+
+[[skills.config]]
+path = "{{CEO_HOME}}/skills/.system/skill-installer"
+enabled = false
+
+```
+
+### 6.2 Config del Herrero (`HERRERO_HOME/config.toml`)
+
+```toml
+# Plantilla de configuración del Herrero (Codex con Qwen local vía LM Studio).
+# Es una plantilla: sustituye los valores {{...}} por los tuyos antes de usarla.
+# No es una copia del config privado de Aaron; se redactó desde los valores
+# deseados documentados en la guía (research.md de la feature 001-ceo-herrero-web).
+
+# Carpeta compartida donde trabajan CEO y Herrero (mismo -C en ambos procesos).
+# Ejemplo: /Users/TU_USUARIO/mi-proyecto
+workspace = "{{WORKSPACE_DIR}}"
+
+# Modelo local servido por LM Studio. {{QWEN_MODEL_ID}} es el identificador
+# estable que devuelve tu instalación (en el montaje observado: "6-bit").
+model = "{{QWEN_MODEL_ID}}"
+model_provider = "lmstudio"
+oss_provider = "lmstudio"
+
+# Contexto real cargado por tu modelo (no el máximo teórico) y umbral de
+# compactación por debajo de ese contexto. En el montaje observado: 169728 y
+# 135000. Ajusta ambos a tu modelo manteniendo COMPACT_LIMIT < QWEN_CONTEXT.
+model_context_window = {{QWEN_CONTEXT}}
+model_auto_compact_token_limit = {{COMPACT_LIMIT}}
+
+# Efecto directo de estos dos valores: el Herrero ejecuta comandos sin pedir
+# confirmación y sin sandbox. Revísalo antes de abrir el Herrero en una carpeta nueva.
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+web_search = "disabled"
+
+# Montaje mínimo: se desactivan plugins, apps, MCP adicionales, hooks, memorias,
+# multi-agente y dependencias de workspace. Si la app de escritorio vuelve a
+# registrar marketplaces o plugins, retíralos; no son parte del montaje mínimo.
+[features]
+multi_agent = false
+multi_agent_v2 = false
+agent_message_board = false
+memories = false
+plugins = false
+remote_plugin = false
+apps = false
+hooks = false
+workspace_dependencies = false
+daemon_auto_start = false
+browser_use = false
+browser_use_external = false
+computer_use = false
+image_generation = false
+code_mode_host = false
+
+[memories]
+use_memories = false
+generate_memories = false
+
+# Confía la carpeta compartida (ajusta la ruta a tu {{WORKSPACE_DIR}}).
+[projects."{{WORKSPACE_DIR}}"]
+trust_level = "trusted"
+
+# Skills del sistema que no se usan en esta arquitectura: quedan desactivadas
+# explícitamente. Si Codex vuelve a desplegarlas, conserva estas entradas.
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/imagegen"
+enabled = false
+
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/openai-docs"
+enabled = false
+
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/plugin-creator"
+enabled = false
+
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/review-agent"
+enabled = false
+
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/skill-creator"
+enabled = false
+
+[[skills.config]]
+path = "{{HERRERO_HOME}}/skills/.system/skill-installer"
+enabled = false
+
+```
+
+### 6.3 Reglas del CEO (`CEO_HOME/AGENTS.md`)
+
+```markdown
+# CEO
+
+Eres CEO: Codex con GPT. En el proyecto compartido ejecutas únicamente el flujo de Spec Kit `specify → clarify → plan → tasks` solicitado por el usuario. Investigas y redactas los artefactos en esta sesión. Al terminar `tasks`, esperas al usuario: Herrero ejecuta la implementación en su Codex independiente.
+
+No delegues, no lances otro Codex, no uses `codex exec`, workers, Hermes, OpenCode, ECC, wrappers ni orquestadores. Usa únicamente las cinco skills de Spec Kit del proyecto. No importes memorias ni instrucciones de la arquitectura anterior.
+
+Coloca este archivo en `{{CEO_HOME}}/AGENTS.md` (por ejemplo `$HOME/.codex/AGENTS.md`).
+```
+
+### 6.4 Reglas del Herrero (`HERRERO_HOME/AGENTS.md`)
+
+```markdown
+# Herrero
+
+Eres Herrero: Codex con Qwen local. Trabajas directamente en la misma carpeta y checkout que CEO. Al recibir `$speckit-implement`, lee `spec.md`, `plan.md`, `tasks.md` y los demás artefactos de la feature activa de Spec Kit. Ejecuta las tareas tú mismo, una cada vez y respetando sus dependencias. Los marcadores `[P]` no autorizan workers ni delegación.
+
+Verifica cada tarea y márcala `[X]` en el mismo `tasks.md` antes de continuar. Si falta el plan o la lista de tareas, o una tarea queda bloqueada, informa al usuario y espera la corrección de CEO. No regeneres ni replantees sus artefactos.
+
+No lances otro Codex ni uses `codex exec`, workers, Hermes, OpenCode, ECC, wrappers, orquestadores, skills antiguas ni infraestructura adicional. Usa únicamente Spec Kit del proyecto y las herramientas nativas de tu propia sesión.
+
+Coloca este archivo en `{{HERRERO_HOME}}/AGENTS.md` (por ejemplo `$HOME/.codex-qwen/AGENTS.md`).
+```
+
+### 6.5 Reglas del proyecto (`WORKSPACE_DIR/AGENTS.md`)
+
+```markdown
+# Arquitectura de trabajo
+
+Coloca este archivo en la raíz del proyecto compartido (`{{WORKSPACE_DIR}}/AGENTS.md`).
+
+- CEO = Codex con GPT: `$speckit-specify` → `$speckit-clarify` → `$speckit-plan` → `$speckit-tasks`.
+- Herrero = Codex con Qwen local: `$speckit-implement`, leyendo los mismos artefactos y ejecutando directamente las tareas.
+- Ambos trabajan en esta carpeta y en el mismo checkout. La feature activa se comparte mediante `.specify/feature.json`; sus artefactos viven en `specs/<feature>/`.
+- El usuario cambia de una sesión a otra al terminar cada fase. CEO y Herrero no se invocan entre sí.
+- No se permite delegación, subagentes, workers, `codex exec`, Hermes, OpenCode, ECC, wrappers, orquestadores ni workflows automáticos. CEO investiga dentro de su propia sesión; Herrero implementa dentro de la suya.
+- Herrero ejecuta las tareas secuencialmente, verifica y marca cada tarea completada en el mismo `tasks.md`. Si falta un artefacto o una tarea está bloqueada, informa al usuario.
+```
+
+### 6.6 Constitución (`WORKSPACE_DIR/.specify/memory/constitution.md`)
+
+```markdown
+# Constitución de trabajo CEO y Herrero
+
+Coloca este archivo en `{{WORKSPACE_DIR}}/.specify/memory/constitution.md` (Spec Kit lo crea al inicializar; sustitúyelo por este contenido).
+
+## Principios
+
+### I. Dos sesiones independientes
+CEO es Codex con GPT. Herrero es Codex con Qwen local. Ambos trabajan sobre la misma carpeta y el mismo checkout. El usuario realiza el cambio de sesión.
+
+### II. Flujo único
+CEO ejecuta `specify → clarify → plan → tasks`. Herrero lee los mismos artefactos y ejecuta `implement` directamente. No se añaden fases obligatorias.
+
+### III. Ejecución directa
+Cada Codex realiza su trabajo en su propia sesión. No se usan subagentes, workers, `codex exec`, Hermes, OpenCode, ECC, wrappers, orquestadores ni workflows automáticos. LM Studio sirve exclusivamente el modelo Qwen local.
+
+### IV. Artefactos compartidos
+La feature activa se registra en `.specify/feature.json`. `spec.md`, `plan.md`, `tasks.md` y los artefactos de diseño viven en `specs/<feature>/`. Herrero sigue estos documentos sin regenerarlos ni sustituir decisiones de CEO.
+
+### V. Verificación de tareas
+Herrero ejecuta las tareas en orden de dependencias y una cada vez. Marca `[X]` tras verificar cada tarea. Los marcadores `[P]` no implican delegación. Si no puede continuar, comunica la tarea y el motivo al usuario.
+
+## Gobernanza
+
+Esta arquitectura solo se cambia por petición explícita del usuario. Se instala únicamente lo necesario para el proyecto solicitado. No se crean proyectos de prueba ni canarios para verificar la configuración de este Mac.
+
+**Version**: 1.0.0 | **Ratified**: 2026-09-26 | **Last Amended**: 2026-09-26
+```
+
+## 7. Verificación sin canarios
+
+Comprueba la configuración y la disponibilidad; no envíes una tarea artificial ni montes un proyecto de prueba, y no presentes una verificación de config como prueba de calidad del modelo:
+
+1. Versiones: `codex --version`, `lms --version`, `specify --version`.
+2. Config efectivo de cada home: modelo, proveedor, `approval_policy`, `sandbox_mode` y las flags `[features]`.
+3. Modelo: `lms ls` para ver claves; tras cargar, el ID estable que devuelve la instalación.
+4. Proveedor: servidor escuchando en `127.0.0.1:1234` y modelo cargado con el contexto esperado.
+5. Skills: las cinco carpetas existen en `.agents/skills/` y sus entradas siguen en el manifiesto de Codex.
+6. Si tu versión de `codex` lo incluye, `codex doctor` como inspección adicional.
+
+## 8. Condiciones de parada
+
+Detente e informa el dato concreto pendiente si:
+
+- Falta la autenticación OpenAI del CEO y no puede hacerse interactivamente.
+- El Qwen no está en disco ni tiene procedencia verificable, o faltan datos para elegirlo.
+- El proveedor local es incompatible (servidor inaccesible, modelo no carga, contexto insuficiente).
+- Una ruta contiene cambios que no puedas preservar (configs o AGENTS ajenos sin respaldo).
+- Hay componentes de un montaje anterior que no puedas atribuir y el usuario no autorice su retirada.
+
+## 9. Entrega final
+
+Al terminar, informa:
+
+- Dónde quedan CEO (`CEO_HOME`), Herrero (`HERRERO_HOME`) y Spec Kit (`.specify/`, `.agents/skills/` en `WORKSPACE_DIR`).
+- Comandos de apertura, uno por terminal:
+
+  ```bash
+  # CEO (en una terminal)
+  CODEX_HOME="$HOME/.codex" codex --no-daemon -C "$HOME/mi-proyecto"
+  ```
+
+  ```bash
+  # Herrero (en otra terminal)
+  CODEX_HOME="$HOME/.codex-qwen" codex --no-daemon --oss --local-provider lmstudio --model "$QWEN_MODEL_ID" -C "$HOME/mi-proyecto"
+  ```
+
+- Comandos de cada rol: CEO ejecuta `$speckit-specify`, `$speckit-clarify`, `$speckit-plan` y `$speckit-tasks`; Herrero ejecuta `$speckit-implement`. El cambio de sesión siempre lo hace el usuario.
+- Lo retirado (workflow, skills extra, registros ajenos) y lo conservado (credenciales, historial, proyectos).
+- Comprobaciones realizadas de la sección 7 y limitaciones concretas (por ejemplo, qué verificación no fue posible).
+
+## Fuentes
+
+- [Codex CLI](https://developers.openai.com/codex/cli) y [referencia de configuración](https://developers.openai.com/codex/config-reference).
+- [LM Studio: defaults por modelo](https://lmstudio.ai/docs/app/advanced/per-model) y [comando nativo de carga](https://lmstudio.ai/docs/cli/load).
+- [Spec Kit: instalación oficial](https://github.com/github/spec-kit/blob/main/docs/installation.md) e [integración Codex](https://github.com/github/spec-kit/blob/main/docs/reference/integrations.md).
