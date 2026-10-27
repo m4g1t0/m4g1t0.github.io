@@ -1,0 +1,21 @@
+# Aaron AI
+
+> Diario, guías y opiniones sobre un sistema personal de IA que funciona entero en casa: modelos locales, chat desde el iPhone, agentes y aprobaciones. Sin nube de pago.
+
+Todo el contenido es gratuito y sin registro. Las guías describen un sistema real que funciona en un Mac Studio con modelos locales.
+
+## Diario
+
+Cómo se va construyendo, fase a fase, con lo que sale bien y lo que no.
+
+## Guías
+
+Paso a paso para montar tu propia IA local.
+
+## Opinión
+
+Lo que pienso de la IA local, la nube y lo que viene.
+
+## Sobre el sitio
+
+- [Portada: el plan, paso a paso](https://m4g1t0.github.io/)

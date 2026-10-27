@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://m4g1t0.github.io/sitemap-index.xml
