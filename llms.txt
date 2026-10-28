@@ -16,6 +16,19 @@ Paso a paso para montar tu propia IA local.
 
 Lo que pienso de la IA local, la nube y lo que viene.
 
+## Investigador
+
+Informes diarios de historia y filosofía, redactados por un modelo local a partir de fuentes abiertas.
+
+- [El último pensador romano al borde del abismo](https://m4g1t0.github.io/investigador/2026-10-28-filosofia-boecio/): Boecio fue un aristócrata romano que vivió bajo el dominio ostrogodo y murió ejecutado tras ser acusado de traición.
+- [El ocaso de Roma y la larga noche europea](https://m4g1t0.github.io/investigador/2026-10-28-historia-la-caida-del-imperio-romano-de-occidente/): En 476 d. C., Odoacro depuso a Rómulo Augústulo, último emperador occidental, tras capturar y ejecutar a su padre Oreste en Piacenza.
+- [El río que no es el mismo](https://m4g1t0.github.io/investigador/2026-10-27-filosofia-heraclito/): Heráclito de Éfeso fue un filósofo presocrático griego que vivió hacia el 500 a. C.
+- [El paso de los persas y el destino griego](https://m4g1t0.github.io/investigador/2026-10-27-historia-las-termopilas-y-las-guerras-medicas/): La colisión entre Grecia y Persia arrancó con la conquista de Jonia por Ciro II en 547 a. C., y se agravó tras la revuelta jónica de 499 a. C., apoyada por Atenas y Eretria.
+- [El alma, la ciudad y la verdad en los diálogos de Platón](https://m4g1t0.github.io/investigador/2026-10-26-filosofia-platon/): Platón, nacido hacia el 429 a. C. en Atenas, fue un filósofo griego cuya obra transformó la reflexión occidental al sistematizar cuestiones éticas, políticas y metafísicas.
+- [La espada de un joven que redibujó las fronteras del mundo antiguo](https://m4g1t0.github.io/investigador/2026-10-26-historia-alejandro-magno-y-sus-conquistas/): Alejandro Magno, hijo de Filipo II, asumió el trono macedonio en 336 a. C. tras el asesinato de su padre.
+- [La luz que buscaba Agustín en Hipona](https://m4g1t0.github.io/investigador/2026-10-25-filosofia-agustin-de-hipona/): Agustín de Hipona, nacido el 13 de noviembre de 354 en Tagaste, del norte romano de África, hoy Souk Ahras en Argelia, y muerto el 28 de agosto de 430, fue obispo, filósofo y retórico cristiano.
+- [La caída de Roma ante los visigodos en el año 410](https://m4g1t0.github.io/investigador/2026-10-25-historia-el-saqueo-de-roma-del-ano-410/): En agosto del año 410, los visigodos al mando de Alarico saquearon Roma durante tres días y fue el tercer asedio a la ciudad en apenas dos años.
+
 ## Sobre el sitio
 
 - [Portada: el plan, paso a paso](https://m4g1t0.github.io/)
